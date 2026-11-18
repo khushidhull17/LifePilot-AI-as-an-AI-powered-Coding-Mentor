@@ -144,3 +144,28 @@ test('health endpoint reports database connectivity without leaking secrets', as
   assert.equal(response.body.aiConfigured, false);
   assert.equal(response.body.geminiApiKey, undefined);
 });
+
+test('CORS allows the API origin and configured client origins but blocks others', async () => {
+  const sameOrigin = await request(app)
+    .get('/api/health')
+    .set('Host', 'api.example.test')
+    .set('Origin', 'https://api.example.test');
+
+  assert.equal(sameOrigin.status, 200);
+  assert.equal(sameOrigin.headers['access-control-allow-origin'], 'https://api.example.test');
+
+  const allowedClient = await request(app)
+    .get('/api/health')
+    .set('Origin', 'http://localhost:5173');
+
+  assert.equal(allowedClient.status, 200);
+  assert.equal(allowedClient.headers['access-control-allow-origin'], 'http://localhost:5173');
+
+  const blocked = await request(app)
+    .get('/api/health')
+    .set('Host', 'api.example.test')
+    .set('Origin', 'https://attacker.example.test');
+
+  assert.equal(blocked.status, 403);
+  assert.equal(blocked.body.code, 'CORS_BLOCKED');
+});

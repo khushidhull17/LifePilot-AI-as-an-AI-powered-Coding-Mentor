@@ -37,14 +37,28 @@ export function createApp() {
   );
 
   app.use(
-    cors({
-      origin(origin, callback) {
-        if (!origin || allowedOrigins.has(origin)) {
-          callback(null, true);
-          return;
-        }
-        callback(new ApiError(403, 'This origin is not allowed to call the API.', 'CORS_BLOCKED'));
-      },
+    cors((req, callback) => {
+      const origin = req.header('Origin');
+
+      // Requests without an Origin (curl, health checks, navigation) and
+      // same-origin requests are always allowed. The latter matters when
+      // Express serves the built React app: its assets use `crossorigin`,
+      // which makes the browser send an Origin header for same-origin files.
+      if (!origin) {
+        callback(null, { origin: true });
+        return;
+      }
+
+      const host = req.get('host');
+      const isSameOrigin =
+        host && (origin === `http://${host}` || origin === `https://${host}`);
+
+      if (isSameOrigin || allowedOrigins.has(origin)) {
+        callback(null, { origin: true });
+        return;
+      }
+
+      callback(new ApiError(403, 'This origin is not allowed to call the API.', 'CORS_BLOCKED'));
     })
   );
 
