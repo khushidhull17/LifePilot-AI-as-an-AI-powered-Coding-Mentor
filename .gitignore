@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Build output
+dist/
+build/
+client/dist/
+coverage/
+
+# Logs and caches
+*.log
+logs/
+npm-debug.log*
+.npm/
+.cache/
+.vite/
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.mongodb-binaries/
